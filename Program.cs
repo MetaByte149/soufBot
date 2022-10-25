@@ -8,7 +8,7 @@ using TwitchLib.Communication.Clients;
 using TwitchLib.Communication.Models;
 using System.Text.Json;
 using Newtonsoft.Json;
-
+using LiteDB;
 
 namespace SoufBot
 {
@@ -16,14 +16,24 @@ namespace SoufBot
     {
         static void Main(string[] args)
         {
-            SoufBot soufBot = new SoufBot();
-            String? text = "";
-            while (true)
-            {
-                text = Console.ReadLine();
-                soufBot.SendMessage("metabyte149", text ?? "ERROR");
-            }
+            // SoufBot soufBot = new SoufBot();
+            // String? text = "";
+            // while (true)
+            // {
+            //     text = Console.ReadLine();
+            //     soufBot.SendMessage("metabyte149", text ?? "ERROR");
+            // }
+
+            var db = new LiteDatabase("testDB.db");
+
+            var collection = db.GetCollection("testCollection");
+
+
         }
+
+        public class testClass {
+            
+        } 
     }
 
 }

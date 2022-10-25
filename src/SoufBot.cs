@@ -9,13 +9,18 @@ using TwitchLib.Communication.Models;
 using Newtonsoft.Json;
 using SoufBot.Model;
 
-namespace SoufBot {
+namespace SoufBot
+{
     class SoufBot
     {
         TwitchClient client;
+        public DatabaseConnection db;
+
         public string OAUTH_TOKEN = "";
         public string USERNAME = "";
         public string[] CHANNEL_LIST = new String[0];
+
+
 
         public SoufBot()
         {
@@ -34,6 +39,9 @@ namespace SoufBot {
             {
                 this.printError("Could not read secrets and assign");
             }
+
+
+            this.db = new DatabaseConnection();
 
 
             ConnectionCredentials credentials = new ConnectionCredentials(
