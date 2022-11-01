@@ -9,19 +9,21 @@ public class ChatUser
     public string? username { get; set; } = "INVALID";
     public int? timeLastMessageAwarded { get; set; } = -1;
     public int? score { get; set; } = -1;
+    public int? messagesSent { get; set; } = -1;
 
-    public ChatUser(string? username, int? timeLastMessageAwarded, int? score)
+    public ChatUser(string username = "", int timeLastMessageAwarded = 0, int score = 0, int messagesSent = 0)
     {
         this.username = username;
         this.timeLastMessageAwarded = timeLastMessageAwarded;
         this.score = score;
+        this.messagesSent = messagesSent;
     }
 
     public ChatUser() { }
 
     public override string ToString()
     {
-        return $"{username}\t{timeLastMessageAwarded}\t{score}";
+        return $"{username}\t{timeLastMessageAwarded}\t{score}\t{messagesSent}";
     }
 
 
