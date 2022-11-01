@@ -50,4 +50,24 @@ class DatabaseConnection {
         }
     }
 
+    public List<ChatUser> getTopTenOfChannel(string channel) {
+
+        using (db) {
+            var collection = db.GetCollection<ChatUser>(channel);
+
+            var originalFind = collection.Find(Query.All("score", Query.Descending), 0, 10);
+
+            List<ChatUser> userList = new List<ChatUser>();
+
+            foreach (var user in originalFind)
+                if (user != null) {
+                    Console.WriteLine(user.ToString());
+                    userList.Add(user);
+                }
+
+            return userList;
+
+        }
+
+    }
 }

@@ -1,5 +1,4 @@
-﻿using LiteDB;
-using soufBot.src;
+﻿using soufBot.src;
 
 namespace SoufBot {
     class Program {

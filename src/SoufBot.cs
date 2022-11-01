@@ -93,9 +93,11 @@ class TwitchBot {
 
         if (message.Message.StartsWith("soufbot "))
             try {
-                HandleCommand(message.Message.Split(" ").Skip(1).ToArray());
+                HandleCommand(message.Message.Split(" ").Skip(1).ToArray(), message.Channel);
+
             } catch (Exception exception) {
                 PrintError($"HandleCommand: {exception.Message}");
+
             }
 
         try {
@@ -103,10 +105,27 @@ class TwitchBot {
         } catch (Exception exception) {
             PrintError($"UpdateScoreFromUser: {exception.Message}");
         }
+
     }
 
-    private void HandleCommand(string[] args) {
-        throw new NotImplementedException();
+    private void HandleCommand(string[] args, string channel) {
+
+        switch (args[0]) {
+            case "leaderboard":
+                printLeaderboard(channel);
+                break;
+
+            default:
+                SendMessage(channel, "KonCha");
+                break;
+        }
+    }
+
+    private void printLeaderboard(string channel) {
+        List<ChatUser> topUsers = db.getTopTenOfChannel(channel);
+        int i = 0;
+        String txt = String.Join(", ", topUsers.Select(e => $"{++i}). {e.username} "));
+        SendMessage(channel, txt);
     }
 
     private void UpdateScoreFromUser(ChatUser? chatUser, ChatMessage message, int currentTime) {
