@@ -15,11 +15,13 @@ namespace soufBot.src;
 class TwitchBot
 {
     TwitchClient client;
-    public DatabaseConnection db;
+    private DatabaseConnection db;
 
-    public string OAUTH_TOKEN = "";
-    public string USERNAME = "";
-    public string[] CHANNEL_LIST = new string[0];
+    private string OAUTH_TOKEN = "";
+    private string USERNAME = "";
+    private string[] CHANNEL_LIST = new string[0];
+
+    private int indexOfChannelsJoined = 0;
 
 
 
@@ -60,8 +62,8 @@ class TwitchBot
         WebSocketClient customClient = new WebSocketClient(clientOptions);
         client = new TwitchClient(customClient);
 
-        foreach (string channel in CHANNEL_LIST!)
-            client.Initialize(credentials, channel);
+        client.Initialize(credentials, CHANNEL_LIST[0]);
+        indexOfChannelsJoined++;
 
         client.OnLog += Client_OnLog!;
         client.OnJoinedChannel += Client_OnJoinedChannel!;
@@ -77,7 +79,8 @@ class TwitchBot
 
     private void Client_OnLog(object sender, OnLogArgs e)
     {
-        // printLog($"{e.DateTime.ToString()}: {e.BotUsername} - {e.Data}");
+        // printLog($"{e.DateTime.ToString()}: {e.BotUsername} - {e.Data} ");
+
     }
 
     private void Client_OnConnected(object sender, OnConnectedArgs e)
@@ -88,6 +91,11 @@ class TwitchBot
     private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
     {
         SendMessage(e.Channel, "Hey guys! I am a bot connected via TwitchLib!");
+
+        if (indexOfChannelsJoined >= CHANNEL_LIST.Length) return;
+
+        client.JoinChannel(CHANNEL_LIST[indexOfChannelsJoined]);
+        indexOfChannelsJoined++;
     }
 
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
