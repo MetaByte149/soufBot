@@ -13,39 +13,39 @@ using soufBot.src.tools;
 namespace soufBot.src;
 
 class TwitchBot {
-    TwitchClient client;
-    private DatabaseConnection db;
+    readonly TwitchClient client;
+    readonly private DatabaseConnection db;
 
-    private string OAUTH_TOKEN = "";
-    private string USERNAME = "";
-    private string[] CHANNEL_LIST = new string[0];
+    readonly private string OAUTH_TOKEN = "";
+    readonly private string USERNAME = "";
+    readonly private string[] CHANNEL_LIST = Array.Empty<string>();
 
     private int indexOfChannelsJoined = 0;
 
     public TwitchBot() {
         try {
-            printLog("Reading secrets file...");
+            PrintLog("Reading secrets file...");
             string secretFileText = File.ReadAllText("secret/secret.json");
             Secrets? secrets = JsonConvert.DeserializeObject<Secrets>(secretFileText);
 
             USERNAME = secrets?.USERNAME ?? "";
 
             OAUTH_TOKEN = secrets?.OAUTH_TOKEN ?? "";
-            CHANNEL_LIST = secrets?.CHANNEL_LIST ?? new string[0];
-            printLog("Finished reading secrets file!");
+            CHANNEL_LIST = secrets?.CHANNEL_LIST ?? Array.Empty<string>();
+            PrintLog("Finished reading secrets file!");
         } catch {
             PrintError("Could not read secrets and assign");
         }
 
-        printLog("Connecting to twitch...");
+        PrintLog("Connecting to twitch...");
         db = new DatabaseConnection();
 
-        ConnectionCredentials credentials = new ConnectionCredentials(USERNAME, OAUTH_TOKEN);
+        var credentials = new ConnectionCredentials(USERNAME, OAUTH_TOKEN);
         var clientOptions = new ClientOptions {
             MessagesAllowedInPeriod = 750,
             ThrottlingPeriod = TimeSpan.FromSeconds(30)
         };
-        WebSocketClient customClient = new WebSocketClient(clientOptions);
+        var customClient = new WebSocketClient(clientOptions);
         client = new TwitchClient(customClient);
 
         client.Initialize(credentials, CHANNEL_LIST[0]);
@@ -60,7 +60,7 @@ class TwitchBot {
 
         client.Connect();
 
-        printLog("Connected to twitch!");
+        PrintLog("Connected to twitch!");
     }
 
     private void Client_OnLog(object sender, OnLogArgs e) {
@@ -68,7 +68,7 @@ class TwitchBot {
     }
 
     private void Client_OnConnected(object sender, OnConnectedArgs e) {
-        printLog($"Connected to {e.AutoJoinChannel}");
+        PrintLog($"Connected to {e.AutoJoinChannel}");
     }
 
     private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e) {
@@ -84,12 +84,12 @@ class TwitchBot {
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e) {
         ChatMessage message = e.ChatMessage;
         int currentTime = Time.CurrentTimeSeconds();
-        printLog(
+        PrintLog(
             $"Received message {message.Message} in {message.Channel} from {message.DisplayName}"
         );
 
         ChatUser? chatUser = db.getUserFromChannel(message.DisplayName, message.Channel);
-        printLog($"Attempted to pick up chatuser: {chatUser?.ToString()}");
+        PrintLog($"Attempted to pick up chatuser: {chatUser?.ToString()}");
 
         if (message.Message.StartsWith("soufbot "))
             try {
@@ -112,7 +112,7 @@ class TwitchBot {
 
         switch (args[0]) {
             case "leaderboard":
-                printLeaderboard(channel);
+                PrintLeaderboard(channel);
                 break;
 
             default:
@@ -121,16 +121,16 @@ class TwitchBot {
         }
     }
 
-    private void printLeaderboard(string channel) {
+    private void PrintLeaderboard(string channel) {
         List<ChatUser> topUsers = db.getTopTenOfChannel(channel);
         int i = 0;
-        String txt = String.Join(", ", topUsers.Select(e => $"{++i}). {e.username} "));
+        string txt = string.Join(", ", topUsers.Select(e => $"{++i}). {e.username} "));
         SendMessage(channel, txt);
     }
 
     private void UpdateScoreFromUser(ChatUser? chatUser, ChatMessage message, int currentTime) {
         if (chatUser == null) {
-            printLog($"{message.DisplayName} is new!");
+            PrintLog($"{message.DisplayName} is new!");
             chatUser = new ChatUser(
                 message.DisplayName,
                 currentTime,
@@ -138,20 +138,20 @@ class TwitchBot {
                 1
             );
         } else if (currentTime - chatUser.timeLastMessageAwarded > Constants.TIME_BETWEEN_MESSAGES) {
-            printLog($"{chatUser.username} deserves some points");
+            PrintLog($"{chatUser.username} deserves some points");
 
             chatUser.score += Constants.SCORE_PER_MESSAGE;
             chatUser.timeLastMessageAwarded = currentTime;
             chatUser.messagesSent++;
         } else {
             chatUser.messagesSent++;
-            printLog($"{chatUser.username} chatted recently already");
+            PrintLog($"{chatUser.username} chatted recently already");
         }
 
-        printLog($"Updating/inserting {chatUser.username}");
+        PrintLog($"Updating/inserting {chatUser.username}");
         bool userExisted = db.UpdateUserFromChannel(chatUser, message.Channel);
 
-        printLog(
+        PrintLog(
             userExisted
                 ? "User has been found and is updated"
                 : "User has not been found and is inserted"
@@ -164,14 +164,14 @@ class TwitchBot {
 
     public void SendMessage(string channel, string message) {
         client.SendMessage(channel, message);
-        printLog($"{USERNAME} : {message}");
+        PrintLog($"{USERNAME} : {message}");
     }
 
-    private void PrintError(string? msg) {
-        printLog($"[ERROR]: {msg}");
+    private static void PrintError(string? msg) {
+        PrintLog($"[ERROR]: {msg}");
     }
 
-    private void printLog(string? msg) {
+    private static void PrintLog(string? msg) {
         Console.WriteLine($"[LOG]: {msg}");
     }
 }

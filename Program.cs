@@ -2,9 +2,9 @@
 
 namespace SoufBot {
     class Program {
-        static void Main(string[] args) {
-            TwitchBot soufBot = new TwitchBot();
-            String? text = "";
+        static void Main(string[] _) {
+            var soufBot = new TwitchBot();
+            string? text;
             while (true) {
                 text = Console.ReadLine();
                 soufBot.SendMessage("metabyte149", text ?? "ERROR");
