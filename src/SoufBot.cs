@@ -12,8 +12,7 @@ using soufBot.src.tools;
 
 namespace soufBot.src;
 
-class TwitchBot
-{
+class TwitchBot {
     TwitchClient client;
     private DatabaseConnection db;
 
@@ -23,10 +22,8 @@ class TwitchBot
 
     private int indexOfChannelsJoined = 0;
 
-    public TwitchBot()
-    {
-        try
-        {
+    public TwitchBot() {
+        try {
             printLog("Reading secrets file...");
             string secretFileText = File.ReadAllText("secret/secret.json");
             Secrets? secrets = JsonConvert.DeserializeObject<Secrets>(secretFileText);
@@ -36,9 +33,7 @@ class TwitchBot
             OAUTH_TOKEN = secrets?.OAUTH_TOKEN ?? "";
             CHANNEL_LIST = secrets?.CHANNEL_LIST ?? new string[0];
             printLog("Finished reading secrets file!");
-        }
-        catch
-        {
+        } catch {
             PrintError("Could not read secrets and assign");
         }
 
@@ -46,8 +41,7 @@ class TwitchBot
         db = new DatabaseConnection();
 
         ConnectionCredentials credentials = new ConnectionCredentials(USERNAME, OAUTH_TOKEN);
-        var clientOptions = new ClientOptions
-        {
+        var clientOptions = new ClientOptions {
             MessagesAllowedInPeriod = 750,
             ThrottlingPeriod = TimeSpan.FromSeconds(30)
         };
@@ -69,18 +63,15 @@ class TwitchBot
         printLog("Connected to twitch!");
     }
 
-    private void Client_OnLog(object sender, OnLogArgs e)
-    {
+    private void Client_OnLog(object sender, OnLogArgs e) {
         // printLog($"{e.DateTime.ToString()}: {e.BotUsername} - {e.Data} ");
     }
 
-    private void Client_OnConnected(object sender, OnConnectedArgs e)
-    {
+    private void Client_OnConnected(object sender, OnConnectedArgs e) {
         printLog($"Connected to {e.AutoJoinChannel}");
     }
 
-    private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
-    {
+    private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e) {
         SendMessage(e.Channel, "Hey guys! I am a bot connected via TwitchLib!");
 
         if (indexOfChannelsJoined >= CHANNEL_LIST.Length)
@@ -90,8 +81,7 @@ class TwitchBot
         indexOfChannelsJoined++;
     }
 
-    private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
-    {
+    private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e) {
         ChatMessage message = e.ChatMessage;
         int currentTime = Time.CurrentTimeSeconds();
         printLog(
@@ -102,34 +92,25 @@ class TwitchBot
         printLog($"Attempted to pick up chatuser: {chatUser?.ToString()}");
 
         if (message.Message.StartsWith("soufbot "))
-            try
-            {
+            try {
                 HandleCommand(message.Message.Split(" ").Skip(1).ToArray());
-            }
-            catch (Exception exception)
-            {
+            } catch (Exception exception) {
                 PrintError($"HandleCommand: {exception.Message}");
             }
 
-        try
-        {
+        try {
             UpdateScoreFromUser(chatUser, message, currentTime);
-        }
-        catch (Exception exception)
-        {
+        } catch (Exception exception) {
             PrintError($"UpdateScoreFromUser: {exception.Message}");
         }
     }
 
-    private void HandleCommand(string[] args)
-    {
+    private void HandleCommand(string[] args) {
         throw new NotImplementedException();
     }
 
-    private void UpdateScoreFromUser(ChatUser? chatUser, ChatMessage message, int currentTime)
-    {
-        if (chatUser == null)
-        {
+    private void UpdateScoreFromUser(ChatUser? chatUser, ChatMessage message, int currentTime) {
+        if (chatUser == null) {
             printLog($"{message.DisplayName} is new!");
             chatUser = new ChatUser(
                 message.DisplayName,
@@ -137,17 +118,13 @@ class TwitchBot
                 Constants.SCORE_PER_MESSAGE,
                 1
             );
-        }
-        else if (currentTime - chatUser.timeLastMessageAwarded > Constants.TIME_BETWEEN_MESSAGES)
-        {
+        } else if (currentTime - chatUser.timeLastMessageAwarded > Constants.TIME_BETWEEN_MESSAGES) {
             printLog($"{chatUser.username} deserves some points");
 
             chatUser.score += Constants.SCORE_PER_MESSAGE;
             chatUser.timeLastMessageAwarded = currentTime;
             chatUser.messagesSent++;
-        }
-        else
-        {
+        } else {
             chatUser.messagesSent++;
             printLog($"{chatUser.username} chatted recently already");
         }
@@ -166,19 +143,16 @@ class TwitchBot
 
     private void Client_OnNewSubscriber(object sender, OnNewSubscriberArgs e) { }
 
-    public void SendMessage(string channel, string message)
-    {
+    public void SendMessage(string channel, string message) {
         client.SendMessage(channel, message);
         printLog($"{USERNAME} : {message}");
     }
 
-    private void PrintError(string? msg)
-    {
+    private void PrintError(string? msg) {
         printLog($"[ERROR]: {msg}");
     }
 
-    private void printLog(string? msg)
-    {
+    private void printLog(string? msg) {
         Console.WriteLine($"[LOG]: {msg}");
     }
 }

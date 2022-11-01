@@ -3,17 +3,14 @@ using soufBot.src.model;
 
 namespace soufBot.src;
 
-class DatabaseConnection
-{
+class DatabaseConnection {
 
     LiteDatabase db;
 
-    public DatabaseConnection()
-    {
+    public DatabaseConnection() {
 
         db = new LiteDatabase(
-            new ConnectionString()
-            {
+            new ConnectionString() {
                 Filename = "chatUsers.db",
                 Connection = ConnectionType.Shared
             }
@@ -21,16 +18,13 @@ class DatabaseConnection
 
     }
 
-    public ChatUser? getUserFromChannel(string name, string channel)
-    {
-        using (db)
-        {
+    public ChatUser? getUserFromChannel(string name, string channel) {
+        using (db) {
             var collection = db.GetCollection<ChatUser>(channel);
 
             var query = collection.Query().Where(x => x.username == name);
 
-            if (query.Exists())
-            {
+            if (query.Exists()) {
                 var obj = query.First();
 
                 return obj;
@@ -40,11 +34,9 @@ class DatabaseConnection
         }
     }
 
-    public bool UpdateUserFromChannel(ChatUser user, string channel)
-    {
+    public bool UpdateUserFromChannel(ChatUser user, string channel) {
 
-        using (db)
-        {
+        using (db) {
             var collection = db.GetCollection<ChatUser>(channel);
 
             bool updated = collection.Update(user);
