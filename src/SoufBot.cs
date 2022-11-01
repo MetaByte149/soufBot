@@ -77,17 +77,16 @@ class TwitchBot
 
     private void Client_OnLog(object sender, OnLogArgs e)
     {
-        // Console.WriteLine($"{e.DateTime.ToString()}: {e.BotUsername} - {e.Data}");
+        // printLog($"{e.DateTime.ToString()}: {e.BotUsername} - {e.Data}");
     }
 
     private void Client_OnConnected(object sender, OnConnectedArgs e)
     {
-        Console.WriteLine($"Connected to {e.AutoJoinChannel}");
+        printLog($"Connected to {e.AutoJoinChannel}");
     }
 
     private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
     {
-        Console.WriteLine("Hey guys! I am a bot connected via TwitchLib!");
         SendMessage(e.Channel, "Hey guys! I am a bot connected via TwitchLib!");
     }
 
@@ -99,12 +98,15 @@ class TwitchBot
 
         ChatUser? chatUser = db.getUserFromChannel(message.DisplayName, message.Channel);
 
+
+
+
         printLog($"Attempted to pick up chatuser: {chatUser?.ToString()}");
 
         if (chatUser == null)
         {
             printLog($"{message.DisplayName} is new!");
-            chatUser = new ChatUser(message.DisplayName, currentTime, Constants.SCORE_PER_MESSAGE);
+            chatUser = new ChatUser(message.DisplayName, currentTime, Constants.SCORE_PER_MESSAGE, 1);
         }
         else if (currentTime - chatUser.timeLastMessageAwarded > Constants.TIME_BETWEEN_MESSAGES)
         {
@@ -112,12 +114,14 @@ class TwitchBot
 
             chatUser.score += Constants.SCORE_PER_MESSAGE;
             chatUser.timeLastMessageAwarded = currentTime;
+            chatUser.messagesSent++;
         }
         else
         {
+            chatUser.messagesSent++;
             printLog($"{chatUser.username} chatted recently already");
-            return;
         }
+
 
         printLog($"Updating/inserting {chatUser.username}");
         bool userExisted = db.UpdateUserFromChannel(chatUser, message.Channel);
@@ -137,12 +141,12 @@ class TwitchBot
     public void SendMessage(string channel, string message)
     {
         client.SendMessage(channel, message);
-        Console.WriteLine($"{USERNAME} : {message}");
+        printLog($"{USERNAME} : {message}");
     }
 
     private void printError(string? msg)
     {
-        Console.WriteLine($"[ERROR]: {msg}");
+        printLog($"[ERROR]: {msg}");
     }
 
     private void printLog(string? msg)
