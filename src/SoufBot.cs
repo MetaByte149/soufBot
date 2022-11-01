@@ -23,13 +23,10 @@ class TwitchBot
 
     private int indexOfChannelsJoined = 0;
 
-
-
     public TwitchBot()
     {
         try
         {
-
             printLog("Reading secrets file...");
             string secretFileText = File.ReadAllText("secret/secret.json");
             Secrets? secrets = JsonConvert.DeserializeObject<Secrets>(secretFileText);
@@ -39,21 +36,16 @@ class TwitchBot
             OAUTH_TOKEN = secrets?.OAUTH_TOKEN ?? "";
             CHANNEL_LIST = secrets?.CHANNEL_LIST ?? new string[0];
             printLog("Finished reading secrets file!");
-
         }
         catch
         {
-            printError("Could not read secrets and assign");
+            PrintError("Could not read secrets and assign");
         }
 
         printLog("Connecting to twitch...");
         db = new DatabaseConnection();
 
-
-        ConnectionCredentials credentials = new ConnectionCredentials(
-            USERNAME,
-            OAUTH_TOKEN
-        );
+        ConnectionCredentials credentials = new ConnectionCredentials(USERNAME, OAUTH_TOKEN);
         var clientOptions = new ClientOptions
         {
             MessagesAllowedInPeriod = 750,
@@ -80,7 +72,6 @@ class TwitchBot
     private void Client_OnLog(object sender, OnLogArgs e)
     {
         // printLog($"{e.DateTime.ToString()}: {e.BotUsername} - {e.Data} ");
-
     }
 
     private void Client_OnConnected(object sender, OnConnectedArgs e)
@@ -92,7 +83,8 @@ class TwitchBot
     {
         SendMessage(e.Channel, "Hey guys! I am a bot connected via TwitchLib!");
 
-        if (indexOfChannelsJoined >= CHANNEL_LIST.Length) return;
+        if (indexOfChannelsJoined >= CHANNEL_LIST.Length)
+            return;
 
         client.JoinChannel(CHANNEL_LIST[indexOfChannelsJoined]);
         indexOfChannelsJoined++;
@@ -102,19 +94,49 @@ class TwitchBot
     {
         ChatMessage message = e.ChatMessage;
         int currentTime = Time.CurrentTimeSeconds();
-        printLog($"Received message {message.Message} in {message.Channel} from {message.DisplayName}");
+        printLog(
+            $"Received message {message.Message} in {message.Channel} from {message.DisplayName}"
+        );
 
         ChatUser? chatUser = db.getUserFromChannel(message.DisplayName, message.Channel);
-
-
-
-
         printLog($"Attempted to pick up chatuser: {chatUser?.ToString()}");
 
+        if (message.Message.StartsWith("soufbot "))
+            try
+            {
+                HandleCommand(message.Message.Split(" ").Skip(1).ToArray());
+            }
+            catch (Exception exception)
+            {
+                PrintError($"HandleCommand: {exception.Message}");
+            }
+
+        try
+        {
+            UpdateScoreFromUser(chatUser, message, currentTime);
+        }
+        catch (Exception exception)
+        {
+            PrintError($"UpdateScoreFromUser: {exception.Message}");
+        }
+    }
+
+    private void HandleCommand(string[] args)
+    {
+        throw new NotImplementedException();
+    }
+
+    private void UpdateScoreFromUser(ChatUser? chatUser, ChatMessage message, int currentTime)
+    {
         if (chatUser == null)
         {
             printLog($"{message.DisplayName} is new!");
-            chatUser = new ChatUser(message.DisplayName, currentTime, Constants.SCORE_PER_MESSAGE, 1);
+            chatUser = new ChatUser(
+                message.DisplayName,
+                currentTime,
+                Constants.SCORE_PER_MESSAGE,
+                1
+            );
         }
         else if (currentTime - chatUser.timeLastMessageAwarded > Constants.TIME_BETWEEN_MESSAGES)
         {
@@ -130,19 +152,17 @@ class TwitchBot
             printLog($"{chatUser.username} chatted recently already");
         }
 
-
         printLog($"Updating/inserting {chatUser.username}");
         bool userExisted = db.UpdateUserFromChannel(chatUser, message.Channel);
 
-        printLog(userExisted ? "User has been found and is updated" : "User has not been found and is inserted");
-
-
-
+        printLog(
+            userExisted
+                ? "User has been found and is updated"
+                : "User has not been found and is inserted"
+        );
     }
 
-    private void Client_OnWhisperReceived(object sender, OnWhisperReceivedArgs e)
-    {
-    }
+    private void Client_OnWhisperReceived(object sender, OnWhisperReceivedArgs e) { }
 
     private void Client_OnNewSubscriber(object sender, OnNewSubscriberArgs e) { }
 
@@ -152,7 +172,7 @@ class TwitchBot
         printLog($"{USERNAME} : {message}");
     }
 
-    private void printError(string? msg)
+    private void PrintError(string? msg)
     {
         printLog($"[ERROR]: {msg}");
     }
