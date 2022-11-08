@@ -72,7 +72,7 @@ class TwitchBot {
     }
 
     private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e) {
-        SendMessage(e.Channel, "Hey guys! I am a bot connected via TwitchLib!");
+        SendMessage(e.Channel, "Hey guys! I am a bot!");
 
         if (indexOfChannelsJoined >= CHANNEL_LIST.Length)
             return;
