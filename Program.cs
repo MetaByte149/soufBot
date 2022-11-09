@@ -7,7 +7,7 @@ namespace SoufBot {
             string? text;
             while (true) {
                 text = Console.ReadLine();
-                soufBot.SendMessage("metabyte149", text ?? "ERROR");
+                soufBot.SendMessage("undeadaragon", text ?? "ERROR");
             }
         }
 

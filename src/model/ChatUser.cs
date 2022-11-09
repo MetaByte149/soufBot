@@ -23,5 +23,9 @@ public class ChatUser {
         return $"{username}\t{timeLastMessageAwarded}\t{score}\t{messagesSent}";
     }
 
+    public NetworkChatUser ToNetworkObject() {
+        return new NetworkChatUser(username ?? "INVALID", score ?? -1, messagesSent ?? -1);
+    }
+
 
 }

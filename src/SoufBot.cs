@@ -9,18 +9,21 @@ using TwitchLib.Communication.Models;
 using Newtonsoft.Json;
 using soufBot.src.model;
 using soufBot.src.tools;
+using System.Timers;
 
 namespace soufBot.src;
 
 class TwitchBot {
     readonly TwitchClient client;
     readonly private DatabaseConnection db;
-
+    readonly private Server server;
     readonly private string OAUTH_TOKEN = "";
     readonly private string USERNAME = "";
     readonly private string[] CHANNEL_LIST = Array.Empty<string>();
 
     private int indexOfChannelsJoined = 0;
+
+    private readonly Thread serverThread;
 
     public TwitchBot() {
         try {
@@ -61,6 +64,30 @@ class TwitchBot {
         client.Connect();
 
         PrintLog("Connected to twitch!");
+
+        System.Timers.Timer timer = new(3000);
+        timer.Elapsed += SendToAllClients;
+        timer.Start();
+
+        PrintLog("Starting server socket...");
+        server = new();
+
+        serverThread = new(() => server.Start());
+        serverThread.Start();
+
+
+    }
+
+    private void SendToAllClients(object? sender, ElapsedEventArgs e) {
+        PrintLog("Time has passed! Executing SendToAllClients now");
+
+        TopRecord[] topRecords = db.GetTopRecords(true, CHANNEL_LIST);
+
+        server.SendDataToAll(topRecords);
+
+
+
+
     }
 
     private void Client_OnLog(object sender, OnLogArgs e) {
@@ -121,8 +148,9 @@ class TwitchBot {
         }
     }
 
+
     private void PrintLeaderboard(string channel) {
-        List<ChatUser> topUsers = db.getTopTenOfChannel(channel);
+        List<ChatUser> topUsers = db.GetTopTenOfChannel(channel);
         int i = 0;
         string txt = string.Join(", ", topUsers.Select(e => $"{++i}). {e.username} "));
         SendMessage(channel, txt);

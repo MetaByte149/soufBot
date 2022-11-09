@@ -1,7 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
+using soufBot.src.model.network;
 
 namespace soufBot.src.model;
 
@@ -12,5 +10,11 @@ public class TopRecord {
     public TopRecord(ChatUser[] topUsers, string channel) {
         this.topUsers = topUsers;
         this.channel = channel;
+    }
+
+    public NetworkTopRecord ToNetworkObject() {
+
+        NetworkChatUser[] networkUsers = topUsers.Select((a) => a.ToNetworkObject()).ToArray();
+        return new NetworkTopRecord(networkUsers);
     }
 }

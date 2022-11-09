@@ -1,5 +1,6 @@
 using LiteDB;
 using soufBot.src.model;
+using soufBot.src.tools;
 
 namespace soufBot.src;
 
@@ -50,18 +51,17 @@ class DatabaseConnection {
         }
     }
 
-    public List<ChatUser> getTopTenOfChannel(string channel) {
+    public List<ChatUser> GetTopTenOfChannel(string channel) {
 
         using (db) {
             var collection = db.GetCollection<ChatUser>(channel);
 
             var originalFind = collection.Find(Query.All("score", Query.Descending), 0, 10);
 
-            List<ChatUser> userList = new List<ChatUser>();
+            List<ChatUser> userList = new();
 
             foreach (var user in originalFind)
                 if (user != null) {
-                    Console.WriteLine(user.ToString());
                     userList.Add(user);
                 }
 
@@ -69,5 +69,39 @@ class DatabaseConnection {
 
         }
 
+    }
+
+    public TopRecord[] GetTopRecords(bool activeUsersOnly, string[] channels) {
+
+        TopRecord[] topRecords = new TopRecord[channels.Length];
+
+        int currentTime = Time.CurrentTimeSeconds();
+
+        if (activeUsersOnly) {
+
+
+            using (db) {
+                for (int i = 0; i < channels.Length; i++) {
+
+                    var collection = db.GetCollection<ChatUser>(channels[i]);
+
+                    var originalFind = collection.Find(Query.All("score", Query.Descending), 0, 10).Where((a) => currentTime - a.timeLastMessageAwarded < Time.MINUTES_TO_SECONDS_RATIO);
+
+                    List<ChatUser> userList = new();
+
+                    foreach (var user in originalFind)
+                        if (user != null) {
+                            userList.Add(user);
+                        }
+
+                    topRecords[i] = new(userList.ToArray(), channels[i]);
+
+                }
+
+            }
+        } else {
+            throw new NotImplementedException();
+        }
+        return topRecords;
     }
 }

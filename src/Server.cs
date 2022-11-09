@@ -7,13 +7,18 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using soufBot.src.model;
+using soufBot.src.model.network;
 
 namespace soufBot.src;
 
 public class Server {
     public const int port = 19727;
 
-    public List<ConnectedClient> clients = new();
+    public List<ConnectedClient> clients;
+
+    public Server() {
+        clients = new();
+    }
 
     public void Start() {
 
@@ -25,7 +30,7 @@ public class Server {
             TcpClient client = listener.AcceptTcpClient();
             PrintLog("Found new client!");
             Thread thread = new(() => HandleNewClient(client));
-            thread.Start(client);
+            thread.Start();
 
         }
     }
@@ -62,10 +67,12 @@ public class Server {
     public void SendDataToAll(TopRecord[] topRecords) {
 
         foreach (ConnectedClient client in clients) {
-            var topRecord = topRecords.First((el) => el.channel == client.channel);
+            TopRecord? topRecord = topRecords.First((el) => el.channel == client.channel);
             if (topRecord == null) continue;
 
-            var jsonText = JsonConvert.SerializeObject(topRecord);
+            NetworkTopRecord networkObject = topRecord.ToNetworkObject();
+
+            var jsonText = JsonConvert.SerializeObject(networkObject);
             client.Send(jsonText);
         }
 
