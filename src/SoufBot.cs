@@ -13,7 +13,8 @@ using System.Timers;
 
 namespace soufBot.src;
 
-class TwitchBot {
+class TwitchBot
+{
     readonly TwitchClient client;
     readonly private DatabaseConnection db;
     readonly private Server server;
@@ -25,8 +26,10 @@ class TwitchBot {
 
     private readonly Thread serverThread;
 
-    public TwitchBot() {
-        try {
+    public TwitchBot()
+    {
+        try
+        {
             PrintLog("Reading secrets file...");
             string secretFileText = File.ReadAllText("secret/secret.json");
             Secrets? secrets = JsonConvert.DeserializeObject<Secrets>(secretFileText);
@@ -36,7 +39,9 @@ class TwitchBot {
             OAUTH_TOKEN = secrets?.OAUTH_TOKEN ?? "";
             CHANNEL_LIST = secrets?.CHANNEL_LIST ?? Array.Empty<string>();
             PrintLog("Finished reading secrets file!");
-        } catch {
+        }
+        catch
+        {
             PrintError("Could not read secrets and assign");
         }
 
@@ -44,7 +49,8 @@ class TwitchBot {
         db = new DatabaseConnection();
 
         var credentials = new ConnectionCredentials(USERNAME, OAUTH_TOKEN);
-        var clientOptions = new ClientOptions {
+        var clientOptions = new ClientOptions
+        {
             MessagesAllowedInPeriod = 750,
             ThrottlingPeriod = TimeSpan.FromSeconds(30)
         };
@@ -65,7 +71,7 @@ class TwitchBot {
 
         PrintLog("Connected to twitch!");
 
-        System.Timers.Timer timer = new(3000);
+        System.Timers.Timer timer = new(15000);
         timer.Elapsed += SendToAllClients;
         timer.Start();
 
@@ -78,7 +84,8 @@ class TwitchBot {
 
     }
 
-    private void SendToAllClients(object? sender, ElapsedEventArgs e) {
+    private void SendToAllClients(object? sender, ElapsedEventArgs e)
+    {
         PrintLog("Time has passed! Executing SendToAllClients now");
 
         TopRecord[] topRecords = db.GetTopRecords(true, CHANNEL_LIST);
@@ -90,15 +97,18 @@ class TwitchBot {
 
     }
 
-    private void Client_OnLog(object sender, OnLogArgs e) {
+    private void Client_OnLog(object sender, OnLogArgs e)
+    {
         // printLog($"{e.DateTime.ToString()}: {e.BotUsername} - {e.Data} ");
     }
 
-    private void Client_OnConnected(object sender, OnConnectedArgs e) {
+    private void Client_OnConnected(object sender, OnConnectedArgs e)
+    {
         PrintLog($"Connected to {e.AutoJoinChannel}");
     }
 
-    private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e) {
+    private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
+    {
         SendMessage(e.Channel, "Hey guys! I am a bot!");
 
         if (indexOfChannelsJoined >= CHANNEL_LIST.Length)
@@ -108,7 +118,8 @@ class TwitchBot {
         indexOfChannelsJoined++;
     }
 
-    private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e) {
+    private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
+    {
         ChatMessage message = e.ChatMessage;
         int currentTime = Time.CurrentTimeSeconds();
         PrintLog(
@@ -119,25 +130,33 @@ class TwitchBot {
         PrintLog($"Attempted to pick up chatuser: {chatUser?.ToString()}");
 
         if (message.Message.StartsWith("soufbot "))
-            try {
+            try
+            {
                 HandleCommand(message.Message.Split(" ").Skip(1).ToArray(), message.Channel);
 
-            } catch (Exception exception) {
+            }
+            catch (Exception exception)
+            {
                 PrintError($"HandleCommand: {exception.Message}");
 
             }
 
-        try {
+        try
+        {
             UpdateScoreFromUser(chatUser, message, currentTime);
-        } catch (Exception exception) {
+        }
+        catch (Exception exception)
+        {
             PrintError($"UpdateScoreFromUser: {exception.Message}");
         }
 
     }
 
-    private void HandleCommand(string[] args, string channel) {
+    private void HandleCommand(string[] args, string channel)
+    {
 
-        switch (args[0]) {
+        switch (args[0])
+        {
             case "leaderboard":
                 PrintLeaderboard(channel);
                 break;
@@ -149,15 +168,18 @@ class TwitchBot {
     }
 
 
-    private void PrintLeaderboard(string channel) {
+    private void PrintLeaderboard(string channel)
+    {
         List<ChatUser> topUsers = db.GetTopTenOfChannel(channel);
         int i = 0;
         string txt = string.Join(", ", topUsers.Select(e => $"{++i}). {e.username} "));
         SendMessage(channel, txt);
     }
 
-    private void UpdateScoreFromUser(ChatUser? chatUser, ChatMessage message, int currentTime) {
-        if (chatUser == null) {
+    private void UpdateScoreFromUser(ChatUser? chatUser, ChatMessage message, int currentTime)
+    {
+        if (chatUser == null)
+        {
             PrintLog($"{message.DisplayName} is new!");
             chatUser = new ChatUser(
                 message.DisplayName,
@@ -165,13 +187,17 @@ class TwitchBot {
                 Constants.SCORE_PER_MESSAGE,
                 1
             );
-        } else if (currentTime - chatUser.timeLastMessageAwarded > Constants.TIME_BETWEEN_MESSAGES) {
+        }
+        else if (currentTime - chatUser.timeLastMessageAwarded > Constants.TIME_BETWEEN_MESSAGES)
+        {
             PrintLog($"{chatUser.username} deserves some points");
 
             chatUser.score += Constants.SCORE_PER_MESSAGE;
             chatUser.timeLastMessageAwarded = currentTime;
             chatUser.messagesSent++;
-        } else {
+        }
+        else
+        {
             chatUser.messagesSent++;
             PrintLog($"{chatUser.username} chatted recently already");
         }
@@ -190,16 +216,19 @@ class TwitchBot {
 
     private void Client_OnNewSubscriber(object sender, OnNewSubscriberArgs e) { }
 
-    public void SendMessage(string channel, string message) {
+    public void SendMessage(string channel, string message)
+    {
         client.SendMessage(channel, message);
         PrintLog($"{USERNAME} : {message}");
     }
 
-    private static void PrintError(string? msg) {
+    private static void PrintError(string? msg)
+    {
         PrintLog($"[ERROR]: {msg}");
     }
 
-    private static void PrintLog(string? msg) {
+    private static void PrintLog(string? msg)
+    {
         Console.WriteLine($"[LOG]: {msg}");
     }
 }

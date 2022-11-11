@@ -11,22 +11,26 @@ using soufBot.src.model.network;
 
 namespace soufBot.src;
 
-public class Server {
+public class Server
+{
     public const int port = 19727;
 
     public List<ConnectedClient> clients;
 
-    public Server() {
+    public Server()
+    {
         clients = new();
     }
 
-    public void Start() {
+    public void Start()
+    {
 
         TcpListener listener = new(IPAddress.Any, port);
         listener.Start();
 
 
-        while (true) {
+        while (true)
+        {
             TcpClient client = listener.AcceptTcpClient();
             PrintLog("Found new client!");
             Thread thread = new(() => HandleNewClient(client));
@@ -35,51 +39,74 @@ public class Server {
         }
     }
 
-    public void HandleNewClient(TcpClient tcpClient) {
+    public void HandleNewClient(TcpClient tcpClient)
+    {
 
         // Buffer for reading data
         byte[] bytes = new byte[256];
         int streamLength;
 
-        try {
+        try
+        {
             // Get a stream object for reading and writing
             NetworkStream stream = tcpClient.GetStream();
 
 
             streamLength = stream.Read(bytes, 0, bytes.Length);
-            string channelName = System.Text.Encoding.ASCII.GetString(bytes, 0, streamLength);
+            string channelName = Encoding.ASCII.GetString(bytes, 0, streamLength);
             PrintLog($"RECEIVED: {channelName}");
 
             ConnectedClient client = new(tcpClient, channelName, stream);
             clients.Add(client);
 
 
-        } catch (SocketException e) {
+        }
+        catch (SocketException e)
+        {
             PrintLog($"SocketException: {e}");
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             PrintLog($"IOException: {e}");
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             PrintLog($"Exception: {e}");
         }
     }
 
 
-    public void SendDataToAll(TopRecord[] topRecords) {
+    public void SendDataToAll(TopRecord[] topRecords)
+    {
 
-        foreach (ConnectedClient client in clients) {
-            TopRecord? topRecord = topRecords.First((el) => el.channel == client.channel);
+        for (int i = clients.Count - 1; i >= 0; i--)
+        {
+            ConnectedClient client = clients[i];
+
+            TopRecord? topRecord = topRecords.FirstOrDefault((el) => el?.channel == client.channel, null);
             if (topRecord == null) continue;
 
             NetworkTopRecord networkObject = topRecord.ToNetworkObject();
 
             var jsonText = JsonConvert.SerializeObject(networkObject);
-            client.Send(jsonText);
+            try
+            {
+                client.Send(jsonText);
+            }
+            catch (IOException e)
+            {
+                PrintLog($"IOException (probably because they quit): {e}");
+                client.Dispose();
+                clients.Remove(client);
+
+            }
         }
 
 
     }
 
-    private static void PrintLog(string? msg) {
+    private static void PrintLog(string? msg)
+    {
         Console.WriteLine($"[SERVER]: {msg}");
     }
 }
